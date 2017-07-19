@@ -22,31 +22,31 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-/**
- * Created by Pham on 20/7/2017.
- */
-
 public class SpyListPresenter {
+
     private static final String TAG = "SpyListPresenter";
+
     private SpyTranslator spyTranslator = new SpyTranslator();
     private Realm realm = Realm.getDefaultInstance();
     private Gson gson = new Gson();
 
     //region Presenter Methods
 
-    //Consumer from rx
-    public void loadData(Consumer<List<Spy>> onNewResults, Consumer<Source> notifyDataReceived){
+    public void loadData(Consumer<List<Spy>> onNewResults, Consumer<Source> notifyDataReceived) {
         try {
             loadSpiesFromLocal(onNewResults);
             notifyDataReceived.accept(Source.local);
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         loadJson(json -> {
             notifyDataReceived.accept(Source.network);
-            persistJson(json, ()-> loadSpiesFromLocal(onNewResults));
+            persistJson(json, ()->loadSpiesFromLocal(onNewResults));
         });
     }
+
+    //endregion
 
     //region Database Methods
 
@@ -144,4 +144,5 @@ public class SpyListPresenter {
     }
 
     //endregion
+
 }

@@ -21,7 +21,6 @@ public class SpyListActivity extends AppCompatActivity {
     private static final String TAG = "SpyListActivity";
 
     private SpyListPresenter presenter = new SpyListPresenter();
-
     private List<Spy> spies = new ArrayList<>();
     private RecyclerView recyclerView;
 
@@ -35,13 +34,6 @@ public class SpyListActivity extends AppCompatActivity {
         loadData();
     }
 
-    private void loadData() {
-        presenter.loadData(spies -> {
-            this.spies = spies;
-            SpyViewAdapter adapter = (SpyViewAdapter) recyclerView.getAdapter();
-        }, source -> notifyDataReceived(source));
-    }
-
     //region Helper Methods
     private void attachUI() {
         LinearLayoutManager manager = new LinearLayoutManager(this);
@@ -49,28 +41,23 @@ public class SpyListActivity extends AppCompatActivity {
         recyclerView = (RecyclerView) findViewById(R.id.spy_recycler_view);
         recyclerView.setLayoutManager(manager);
         recyclerView.setHasFixedSize(true);
+
+        initializeListView();
+
     }
 
-    private void setupData() {
-        try {
-            initializeListView();
-            initializeData();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
     //endregion
 
     //region Data Process specific to SpyListActivity
-    private void initializeData() throws Exception {
 
-        loadSpiesFromLocal();
-        notifyDataReceived(Source.local);
+    private void loadData() {
+        presenter.loadData(spies -> {
+            this.spies = spies;
 
-        loadJson(json -> {
-            notifyDataReceived(Source.network);
-            persistJson(json, () -> loadSpiesFromLocal());
-        });
+            SpyViewAdapter adapter = (SpyViewAdapter) recyclerView.getAdapter();
+            adapter.spies = this.spies;
+            adapter.notifyDataSetChanged();
+        }, this::notifyDataReceived);
     }
 
     //endregion
