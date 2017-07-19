@@ -9,18 +9,12 @@ import android.widget.TextView;
 
 import com.jonbott.knownspies.Activities.SecretDetails.SecretDetailsActivity;
 import com.jonbott.knownspies.Helpers.Constants;
-import com.jonbott.knownspies.Helpers.Helper;
 import com.jonbott.knownspies.ModelLayer.Database.Realm.Spy;
 import com.jonbott.knownspies.R;
 
-import io.realm.Realm;
-
 public class SpyDetailsActivity extends AppCompatActivity {
 
-    private Realm realm = Realm.getDefaultInstance();
-
-    private int spyId = -1;
-
+    private SpyDetailsPresenter presenter;
     private ImageView profileImage;
     private TextView  nameTextView;
     private TextView  ageTextView;
@@ -31,63 +25,64 @@ public class SpyDetailsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_spy_details);
-        setupUI();
+        attachUI();
         parseBundle();
     }
 
+    public void configure(SpyDetailsPresenter presenter) {
+        this.presenter = presenter;
+        this.presenter.configureWithContext(this);
+    }
 
-    //region Helper Methods
+    //region UI Methods
 
-    private void setupUI() {
+    private void attachUI() {
         profileImage    = (ImageView)   findViewById(R.id.details_profile_image);
         nameTextView    = (TextView)    findViewById(R.id.details_name);
         ageTextView     = (TextView)    findViewById(R.id.details_age);
         genderTextView  = (TextView)    findViewById(R.id.details_gender);
         calculateButton = (ImageButton) findViewById(R.id.calculate_button);
-    }
-
-
-    private void configureWith(Spy spy) {
-        int imageId = Helper.resourceIdWith(this, spy.imageName);
-
-        profileImage.setImageResource(imageId);
-        nameTextView.setText(spy.name);
-        ageTextView.setText(String.valueOf(spy.age));
-        genderTextView.setText(spy.gender);
 
         calculateButton.setOnClickListener(v -> gotoSecretDetails());
+
     }
 
-    private void parseBundle() {
-        Bundle b = getIntent().getExtras();
 
-        if(b != null)
-            spyId = b.getInt(Constants.spyIdKey);
-
-        if(spyId != -1) {
-            Spy spy = getSpy(spyId);
-            configureWith(spy);
-        }
+    private void configureUIWith(SpyDetailsPresenter presenter) {
+        ageTextView.setText(presenter.age);
+        nameTextView.setText(presenter.name);
+        genderTextView.setText(presenter.gender);
+        profileImage.setImageResource(presenter.imageId);
     }
 
     //endregion
 
-    //region Data loading
+    //region Dependency Methods
 
-    private Spy getSpy(int id) {
-        Spy tempSpy = realm.where(Spy.class).equalTo("id", id).findFirst();
-        return realm.copyFromRealm(tempSpy);
+    private void getPresenterFor(int spyId) {
+        configure(new SpyDetailsPresenter(spyId));
     }
 
     //endregion
 
     //region navigation
+    private void parseBundle() {
+        Bundle b = getIntent().getExtras();
+
+        if(b != null) {
+            int spyId = b.getInt(Constants.spyIdKey);
+            getPresenterFor(spyId);
+        }
+    }
+
+    //endregion
+
+
+    //region navigation
 
     private void gotoSecretDetails() {
-        if (spyId == -1) return;
-
         Bundle bundle = new Bundle();
-               bundle.putInt(Constants.spyIdKey, spyId);
+               bundle.putInt(Constants.spyIdKey, presenter.spyId);
 
         Intent intent = new Intent(SpyDetailsActivity.this, SecretDetailsActivity.class);
                intent.putExtras(bundle);
