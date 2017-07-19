@@ -14,14 +14,9 @@ import com.jonbott.knownspies.Helpers.Threading;
 import com.jonbott.knownspies.ModelLayer.Database.Realm.Spy;
 import com.jonbott.knownspies.R;
 
-import io.realm.Realm;
-
 public class SecretDetailsActivity extends AppCompatActivity {
 
-    private Realm realm = Realm.getDefaultInstance();
-
-    private int spyId = -1;
-    private Spy spy;
+    SecretDetailsPresenter presenter;
 
     ProgressBar progressBar;
     TextView crackingLabel;
@@ -32,14 +27,22 @@ public class SecretDetailsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_secret_details);
 
-        setupUI();
+        attachUI();
         parseBundle();
-        crackPassword();
+    }
+
+    private void configure(SecretDetailsPresenter presenter) {
+        this.presenter = presenter;
+        presenter.crackPassword(password -> {
+            progressBar.setVisibility(View.GONE);
+            crackingLabel.setText(presenter.password);
+        });
+
     }
 
     //region Helper Methods
 
-    private void setupUI() {
+    private void attachUI() {
         progressBar    = (ProgressBar) findViewById(R.id.secret_progress_bar);
         crackingLabel  = (TextView)    findViewById(R.id.secret_cracking_label);
         finishedButton = (Button)      findViewById(R.id.secret_finished_button);
@@ -48,24 +51,22 @@ public class SecretDetailsActivity extends AppCompatActivity {
 
     }
 
-    private void crackPassword() {
-        Threading.async(()-> {
-            //fake processing work
-            Thread.sleep(2000);
-            return true;
-        }, success -> {
-            progressBar.setVisibility(View.GONE);
-            crackingLabel.setText(spy.password);
-        });
+
+    //region Dependency Method
+
+    private void setupPresenterFor(int spyId) {
+        configure(new SecretDetailsPresenter(spyId));
     }
+
+    //endregion
 
     private void parseBundle() {
         Bundle b = getIntent().getExtras();
 
-        if(b != null)
-            spyId = b.getInt(Constants.spyIdKey);
-
-        spy = getSpy(spyId);
+        if(b != null) {
+            int spyId = b.getInt(Constants.spyIdKey);
+            setupPresenterFor(spyId);
+        }
     }
 
     //endregion
@@ -79,13 +80,5 @@ public class SecretDetailsActivity extends AppCompatActivity {
     }
 
     //endregion
-
-    //region Data loading
-    private Spy getSpy(int id) {
-        Spy tempSpy = realm.where(Spy.class).equalTo("id", id).findFirst();
-        return realm.copyFromRealm(tempSpy);
-    }
-    //endregion
-
 
 }
