@@ -1,6 +1,5 @@
 package com.jonbott.knownspies.ModelLayer.Enums;
 
-public enum Gender {
-    male,
-    female
+public enum DTOType {
+    spy
 }
